@@ -5,9 +5,12 @@ import java.util.Set;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import jakarta.validation.Valid;
 
 
 @Controller
@@ -28,10 +31,26 @@ public class CidadeController {
     }
 
     @PostMapping("/criar")
-    public String criar(Cidade cidade) {
+    public String criar(@Valid Cidade cidade, BindingResult validacao, Model memoria) {
         
-        this.cidades.add(cidade);
-        
+        if (validacao.hasErrors()){
+            validacao
+                .getFieldErrors()
+                .forEach(error ->
+                        memoria.addAttribute(
+                            error.getField(),
+                            error.getDefaultMessage()
+                        )
+                );  
+
+            memoria.addAttribute("nomeInformado", cidade.getNome());
+            memoria.addAttribute("estadoInformado", cidade.getEstado());
+            memoria.addAttribute("listaCidades", this.cidades);
+
+            return ("/crud");
+        } else{
+            this.cidades.add(cidade);
+        }
         return "redirect:/";
     }
     
@@ -77,7 +96,7 @@ public class CidadeController {
                         cidadeAtual.getNome().equals(nomeAtual) &&
                         cidadeAtual.getEstado().equals(estadoAtual));
 
-            this.criar(cidade);
+            this.criar(cidade, null, null);
 
             return "redirect:/";
 
